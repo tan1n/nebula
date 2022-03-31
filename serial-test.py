@@ -1,13 +1,21 @@
+import sys
+from time import sleep
 import serial
-link = serial.Serial(port='COM3', baudrate=115200)
+link = serial.Serial(port='COM3', baudrate=115200, timeout=1)
+sleep(3)
 
 
 def write(data, link):
     for i in data:
-        char = i
-        print(char)
+        char = bytes([i])
         link.write(char)
 
+    # print(link.read())
+write(data=[0, 0, 0], link=link)
 
-list_data = [0, 1, 0, 255, 1, 0, 1]
-print(bytes(42))
+
+# link.write(bytes('Ada', 'utf-8'))
+
+# list_data = [255, 0, 0]
+# # write(list_data, link)
+# print()

@@ -4,27 +4,22 @@ from time import sleep, time
 import mss
 import serial
 import mss.tools
-from pySerialTransfer import pySerialTransfer as txfer
 
 start_tine = time()
 frame = 0
 
+resolution = (1920, 1080)
+factor = 10
 
 dimensions = [
-    [{"top": 0, "left": 0, "width": 1920, "height": 1}, 'top'],  # top
-    [{"top": 1, "left": 1919, "width": 1, "height": 1079}, 'right'],  # right
-    [{"top": 1079, "left": 0, "width": 1920, "height": 1}, 'bottom'],  # bottom
-    [{"top": 1, "left": 0, "width": 1, "height": 1079}, 'left']  # left
+    [{"top": 10, "left": 10, "width": 1910, "height": 1}, 'top'],  # top
+    [{"top": 10, "left": 1910, "width": 1, "height": 1070}, 'right'],  # right
+    [{"top": 1070, "left": 10, "width": 1910, "height": 1}, 'bottom'],  # bottom
+    [{"top": 10, "left": 10, "width": 1, "height": 1070}, 'left']  # left
 ]
 
-led_width = 15
-led_height = 8
-
-
-def init_serial():
-    link = txfer.SerialTransfer('COM3', 9600)
-    link.open()
-    return link
+led_width = 20
+led_height = 13
 
 
 def capture(args):
@@ -39,27 +34,21 @@ def capture(args):
 
 
 def write(data, link):
-    for i in data:
-        char = bytes(str(i), 'utf-8')
-        # char = i
-        print(char)
+    for x, i in enumerate(data):
+        char = bytes([i])
         link.write(char)
-
-# while True:
-#     with concurrent.futures.ThreadPoolExecutor() as executor:
-#         results = [executor.submit(capture, dimension)
-#                    for dimension in dimensions]
-#       for f in concurrent.futures.as_completed(results):
-#         print(f)
 
 
 try:
-    link = serial.Serial(port='COM3', baudrate=115200)
+    link = serial.Serial(port='COM3', baudrate=115200, timeout=1)
+    sleep(3)
+    write(data=[0, 0, 0], link=link)
     while True:
+        frame_time = time()
         for dimension in dimensions:
             data = capture(dimension)
             write(data, link)
-        frame = frame + 1
+        render_time = time() - frame_time
 except KeyboardInterrupt:
-    print(frame/(time() - start_tine))
+    link.close()
     pass
