@@ -13,9 +13,9 @@ factor = 10
 
 dimensions = [
     [{"top": 10, "left": 10, "width": 1910, "height": 1}, 'top'],  # top
-    [{"top": 10, "left": 1910, "width": 1, "height": 1070}, 'right'],  # right
+    [{"top": 11, "left": 1910, "width": 1, "height": 1070}, 'right'],  # right
     [{"top": 1070, "left": 10, "width": 1910, "height": 1}, 'bottom'],  # bottom
-    [{"top": 10, "left": 10, "width": 1, "height": 1070}, 'left']  # left
+    [{"top": 11, "left": 10, "width": 1, "height": 1070}, 'left']  # left
 ]
 
 led_width = 20
@@ -44,11 +44,9 @@ try:
     sleep(3)
     write(data=[0, 0, 0], link=link)
     while True:
-        frame_time = time()
         for dimension in dimensions:
             data = capture(dimension)
             write(data, link)
-        render_time = time() - frame_time
 except KeyboardInterrupt:
     link.close()
     pass
