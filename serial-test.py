@@ -2,32 +2,12 @@ import sys
 from time import sleep
 import numpy as np
 import serial
-# link = serial.Serial(port='COM3', baudrate=115200, timeout=1)
-# sleep(3)
-
-
-# def write(data, link):
-#     for i in data:
-#         char = bytes([i])
-#         link.write(char)
-
-#     # print(link.read())
-# write(data=[0, 0, 0], link=link)
-
-arr = [
-    [22, 45, 65],
-    [255, 90, 81]
-]
-np_arr = np.array(arr)
-pixel = []
-for x in arr:
-    while len(x) > 0:
-        pixel.append(x.pop())
-
-print(pixel[::-1])
-
+link = serial.Serial(port='COM4', baudrate=115200, timeout=1)
+# link.write('Nebula'.encode('utf-8'))
 # print(np_arr.flatten()[::-1])
-# link.write(bytes('Ada', 'utf-8'))
+link.write(str(33).encode('utf-8'))
+link.isOpen()
+link.close()
 
 # list_data = [255, 0, 0]
 # # write(list_data, link)
