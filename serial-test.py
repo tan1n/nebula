@@ -6,7 +6,6 @@ link = serial.Serial(port='COM4', baudrate=115200, timeout=1)
 # link.write('Nebula'.encode('utf-8'))
 # print(np_arr.flatten()[::-1])
 link.write(str(33).encode('utf-8'))
-link.isOpen()
 link.close()
 
 # list_data = [255, 0, 0]

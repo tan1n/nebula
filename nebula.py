@@ -9,16 +9,26 @@ import numpy as np
 import cv2
 from time import sleep, time
 import mss
-import mss.tools
+import sys
 import serial.tools.list_ports
 import pystray
 from pystray import MenuItem as item
 from tkinter import messagebox
 import customtkinter
 from threading import *
+import subprocess
+import psutil
 
 
 run_device = False
+device = False
+
+
+def process_exists(process_name):
+    count = sum(1 for proc in psutil.process_iter()
+                if proc.name() == process_name)
+    return count
+
 
 # config file
 config_file = open('config.json')
@@ -78,9 +88,7 @@ def discover_device():
     for element in comlist:
         connection = serial.Serial(
             port=element.device, baudrate=115200, timeout=1)
-        sleep(1)
-        read = connection.read()
-        if read == b'A' and connection.writable():
+        if connection.read() == b'A' and connection.writable():
             start_time = time() + 30
             while(connection.read() != b'C'):
                 if start_time < time():
@@ -106,32 +114,28 @@ def capture(args):
         output = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         output = cv2.GaussianBlur(output, (5, 5), 0)
         pixel_data = np.array(output)
-        if args[1] == 'bottom' or args[1] == 'left':
-            return reverse_pixels(pixel_data.tolist(), args[1])
+        if args[1] == 'left':
+            return reverse_pixels(pixel_data.tolist())
         else:
             return pixel_data.flatten().tolist()
 
 
-def reverse_pixels(pixel_arr, type):
-    data = pixel_arr[0] if type == 'bottom' else pixel_arr
+def reverse_pixels(pixel_arr):
     pixel = []
-    for x in data:
+    for x in pixel_arr:
         while len(x) > 0:
             pixel.append(x.pop())
-    if type == 'bottom':
-        return pixel[::-1]
-    else:
-        return np.array(pixel).flatten().tolist()
+    return np.array(pixel[::-1]).flatten().tolist()
 
 
 def write(data, checksum=True):
     global device
     if checksum:
-        if device.isOpen():
+        if device and device.isOpen():
             device.write('Frames'.encode('utf-8'))
     for i in data:
         char = bytes([i])
-        if device.isOpen():
+        if device and device.isOpen():
             device.write(char)
 
 
@@ -139,6 +143,10 @@ def disconnect():
     global device
     global run_device
     run_device = False
+    sleep(1)
+    if device and device.isOpen():
+        device.write('D'.encode('utf-8'))
+        device.close()
     change_states()
     deviceStatusLabel.configure(
         text='Device disconnected', text_color='#FF2D00')
@@ -147,8 +155,6 @@ def disconnect():
     else:
         mainToggleButton.configure(text='Start')
     mainToggleButton.configure(command=begin, fg_color='black')
-    device.write('D'.encode('utf-8'))
-    device.close()
 
 
 def set_config():
@@ -195,11 +201,12 @@ def begin():
         run_device = False
         deviceStatusLabel.configure(text='Device not found')
         messagebox.showwarning(
-            "Warning", "No device found. Please connect again and please try again")
+            "Warning", "No device found. Please reconnect the device and try again")
 
 
-resolution = (1920, 817)
-offset = 10 if configs['ambient_mode'] == 'gaming' else 250
+root = customtkinter.CTk()
+resolution = (root.winfo_screenwidth(), root.winfo_screenheight())
+offset = 10 if configs['ambient_mode'] == 'gaming' else 350
 dimensions = [
     [
         {
@@ -234,7 +241,6 @@ led_height = led_count(ceil(configs['display_size']*.49))
 
 # UI CODE
 
-root = customtkinter.CTk()
 root.resizable(width=False, height=False)
 root.title("Nebula Ambilights")
 root.eval('tk::PlaceWindow . center')
@@ -243,7 +249,7 @@ root.eval('tk::PlaceWindow . center')
 # On Window quit
 def quit_window(icon, item):
     global run_device
-    run_device = False
+    disconnect()
     icon.stop()
     root.destroy()
 
@@ -262,7 +268,7 @@ def hide_window():
     root.withdraw()
     image = Image.open("favicon.ico")
     menu = (item('Quit', quit_window), item(
-        'Show', show_window))
+        'Show', show_window, default=True))
     if run_device:
         menu = list(menu)
         menu.insert(2, item('Disconnect', disconnect))
@@ -338,12 +344,17 @@ gamingModeRadioButton = customtkinter.CTkRadioButton(root, text="Gaming Mode", v
     AmbMode.get()))
 gamingModeRadioButton.grid(row=7, column=1, sticky="nw")
 # Run on startup
-StartUpRun = IntVar()
-customtkinter.CTkCheckBox(root, text='Start up',
-                          variable=StartUpRun, onvalue=1, offvalue=0,).grid(row=7, column=2, sticky="nw")
+# StartUpRun = IntVar()
+# customtkinter.CTkCheckBox(root, text='Start up',
+#                           variable=StartUpRun, onvalue=1, offvalue=0,).grid(row=7, column=2, sticky="nw")
 mainToggleButton = customtkinter.CTkButton(
     root, text="Start", command=begin, fg_color='black')
 mainToggleButton.grid(row=8, column=0, columnspan=4, padx=30, pady=30)
 root.protocol('WM_DELETE_WINDOW', hide_window)
 root.iconbitmap('favicon.ico')
+if process_exists('nebula.exe') > 2:
+    messagebox.showwarning(
+        "Warning", "App is already running")
+    sys.exit()
+
 root.mainloop()
