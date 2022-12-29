@@ -205,6 +205,7 @@ def begin():
 
 
 root = customtkinter.CTk()
+root.geometry("370x280")
 resolution = (root.winfo_screenwidth(), root.winfo_screenheight())
 offset = 10 if configs['ambient_mode'] == 'gaming' else 350
 dimensions = [
