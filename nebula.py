@@ -16,7 +16,6 @@ from pystray import MenuItem as item
 from tkinter import messagebox
 import customtkinter
 from threading import *
-import subprocess
 import psutil
 
 
@@ -106,8 +105,8 @@ def led_count(pos):
 
 
 def capture(args):
-    res = (led_width, 1) if args[1] == 'top' or args[1] == 'bottom' else (
-        1, led_height)
+    res = (get_led('w'), 1) if args[1] == 'top' or args[1] == 'bottom' else (
+        1, get_led('h'))
     with mss.mss() as sct:
         screen = np.array(sct.grab(args[0]))
         img = cv2.resize(screen, res, interpolation=INTER_AREA)
@@ -159,15 +158,48 @@ def disconnect():
 
 def set_config():
     global device
-    leds = str(led_width+led_height*2).encode('utf-8')
+    leds = str(get_led('w')+get_led('h')*2).encode('utf-8')
     device.write(leds)
 
 
+def get_dimensions():
+    offset = 10 if configs['ambient_mode'] == 'gaming' else 350
+    return [
+        [
+            {
+                "top": offset,
+                "left": 0,
+                "width": offset,
+                "height": resolution[1]-(offset)
+            },
+            'left'
+        ],
+        [
+            {
+                "top": 0,
+                "left": 0,
+                "width": resolution[0],
+                "height": offset
+            },
+            'top'
+        ],
+        [
+            {
+                "top": offset,
+                "left": resolution[0]-offset,
+                "width": offset,
+                "height": resolution[1]-(offset)
+            },
+            'right'
+        ],
+    ]
+
+
 def start_device():
-    global dimensions
+    dimensions = get_dimensions()
     global run_device
     if configs['mode'] == 'static':
-        total_leds = led_width+led_height*2
+        total_leds = get_led('w')+get_led('h')*2
         queue = []
         for x in range(0, total_leds):
             for y in configs['static_color']:
@@ -207,40 +239,16 @@ def begin():
 root = customtkinter.CTk()
 root.geometry("370x280")
 resolution = (root.winfo_screenwidth(), root.winfo_screenheight())
-offset = 10 if configs['ambient_mode'] == 'gaming' else 350
-dimensions = [
-    [
-        {
-            "top": offset,
-            "left": 0,
-            "width": offset,
-            "height": resolution[1]-(offset)
-        },
-        'left'
-    ],
-    [
-        {
-            "top": 0,
-            "left": 0,
-            "width": resolution[0],
-            "height": offset
-        },
-        'top'
-    ],
-    [
-        {
-            "top": offset,
-            "left": resolution[0]-offset,
-            "width": offset,
-            "height": resolution[1]-(offset)
-        },
-        'right'
-    ],
-]
-led_width = led_count(ceil(configs['display_size']*.875))
-led_height = led_count(ceil(configs['display_size']*.49))
+
+
+def get_led(attribute):
+    if attribute == 'w':
+        return led_count(ceil(configs['display_size']*.875))
+    if attribute == 'h':
+        return led_count(ceil(configs['display_size']*.49))
 
 # UI CODE
+
 
 root.resizable(width=False, height=False)
 root.title("Nebula Ambilights")

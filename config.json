@@ -1,1 +1,1 @@
-{"display_size": 24, "com_port": "COM4", "mode": "ambient", "ambient_mode": "movie", "startup": false, "static_color": [0, 0, 83]}
+{"display_size": 19, "com_port": "COM4", "mode": "static", "ambient_mode": "gaming", "startup": false, "static_color": [255, 0, 0]}
